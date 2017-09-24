@@ -1,2 +1,3 @@
-# ktanemod-painting
-Painting - A module leveraging the  KTANEModKit for 'Keep Talking and Nobody Explodes'
+# Sandbox Experiments
+
+This is a personal sandbox repository for my own KTaNE mod ideas yet to be fully-formed and forked off as a separate repository.
