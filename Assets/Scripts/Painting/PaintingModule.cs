@@ -81,11 +81,6 @@ public class PaintingModule : MonoBehaviour
 
         _painting.Repaint();
 
-        //Old method
-        /*
-        safePainting = RegridSelectables();
-        */
-
         SetupPaletteToPaintingLinks();
 
         _painting.selectionGrid.SetChildren(GetComponentsInChildren<FluidSelectable>());
@@ -99,70 +94,6 @@ public class PaintingModule : MonoBehaviour
             closureCell.fluidSelectable.selectable.Parent = _selectable;
             closureCell.fluidSelectable.selectable.OnInteract += () => OnCellInteract(closureCell);
         }
-    }
-
-    //Old method, keeping it around in case this new method doesn't work.
-    private bool RegridSelectables()
-    {
-        KMSelectable[] children = _selectable.Children;
-        int rowLength = _selectable.ChildRowLength;
-        int columnLength = children.Length / _selectable.ChildRowLength;
-
-        for (int y = 1; y < columnLength; ++y)
-        {
-            for (int x = 0; x < rowLength - 1; ++x)
-            {
-                children[y * rowLength + x] = null;
-            }
-        }
-
-        foreach (PaintingCell cell in _painting.Cells)
-        {
-            Vector2 centerPoint = cell.visiblePolyExtrude.CenterPoint;
-            centerPoint.x += 0.5f;
-            centerPoint.y = 0.5f - centerPoint.y;
-
-            int cellX = Mathf.FloorToInt(centerPoint.x * (rowLength - 1));
-            int cellY = Mathf.FloorToInt(centerPoint.y * (columnLength - 1)) + 1;
-
-            int childIndex = cellY * rowLength + cellX;
-
-            if (children[childIndex] == null)
-            {
-                children[childIndex] = cell.fluidSelectable.selectable;
-            }
-            else
-            {
-                Vector2 existingCenterPoint = _painting.Cells.First((x) => x == children[childIndex]).visiblePolyExtrude.CenterPoint;
-
-                if (cellX < rowLength - 2 && centerPoint.x > existingCenterPoint.x && children[childIndex + 1] == null)
-                {
-                    children[childIndex + 1] = cell.fluidSelectable.selectable;
-                }
-                else if (cellX > 0 && centerPoint.x < existingCenterPoint.x && children[childIndex - 1] == null)
-                {
-                    children[childIndex - 1] = cell.fluidSelectable.selectable;
-                }
-                else if (cellY < columnLength - 1 && centerPoint.y > existingCenterPoint.y && children[childIndex + rowLength] == null)
-                {
-                    children[childIndex + rowLength] = cell.fluidSelectable.selectable;
-                }
-                else if (cellY > 1 && centerPoint.y < existingCenterPoint.y && children[childIndex - rowLength] == null)
-                {
-                    children[childIndex - rowLength] = cell.fluidSelectable.selectable;
-                }
-                else
-                {
-                    Debug.Log("Uh oh, cannot fit this selectable in the grid!");
-                    return false;
-                }
-            }
-        }
-
-        _selectable.Children = children;
-        _selectable.UpdateChildren();
-
-        return true;
     }
 
     private bool SetupPaletteToPaintingLinks()
@@ -239,12 +170,12 @@ public class PaintingModule : MonoBehaviour
         bool specialRuleMatch = _bombInfo.GetPortCount(KMBombInfoExtensions.KnownPortType.DVI) == 2 && _bombInfo.GetPortCount(KMBombInfoExtensions.KnownPortType.RJ45) == 1 && _bombInfo.GetOnIndicators().Contains("CLR");
         if (specialRuleMatch)
         {
-            _bombModule.Log("Special rule takes effect -- express your creativity!.");
+            _bombModule.Log("Special rule takes effect -- express your creativity!");
             return null;
         }
 
-        int ruleATotal = _bombInfo.GetBatteryCount() + _bombInfo.GetIndicators().Count() + _bombInfo.GetPorts().Count() + 3;
-        _bombModule.LogFormat("Rule A total = {0} (battery count ({1}) + indicator count ({2}) + port count ({3}) + {4}.", ruleATotal, _bombInfo.GetBatteryCount(), _bombInfo.GetIndicators().Count(), _bombInfo.GetPorts().Count(), 3);
+        int ruleATotal = _bombInfo.GetBatteryCount() + _bombInfo.GetIndicators().Count() + _bombInfo.GetPorts().Count() + 2;
+        _bombModule.LogFormat("Rule A total = {0} (battery count ({1}) + indicator count ({2}) + port count ({3}) + {4}.", ruleATotal, _bombInfo.GetBatteryCount(), _bombInfo.GetIndicators().Count(), _bombInfo.GetPorts().Count(), 2);
         ColorBlindSet ruleASet = ColorBlindSets.FirstOrDefault((x) => x.Name.Length == ruleATotal);
         if (ruleASet != null)
         {
@@ -316,6 +247,7 @@ public class PaintingModule : MonoBehaviour
             else
             {
                 cell.FinalColorOption = null;
+                _bombModule.LogFormat("{0} must swap from {1} to any other color (special rule).", cell.name, cell.ColorOption);
             }
         }
     }
@@ -340,6 +272,12 @@ public class PaintingModule : MonoBehaviour
             {
                 _bombModule.LogFormat("Tried to paint {0}, but that cell is already complete.", cell.name);
                 _bombModule.HandleStrike();
+            }
+
+            if (IsAllSolved())
+            {
+                _bombModule.Log("All cells are now at a final color.");
+                _bombModule.HandlePass();
             }
 
             return true;
