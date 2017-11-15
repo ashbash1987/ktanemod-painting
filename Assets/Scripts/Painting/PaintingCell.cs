@@ -81,7 +81,7 @@ public class PaintingCell : MonoBehaviour
         //This is required magic to get the game-side highlightable to recognise the dynamically-generated mesh.
         //Super clunky with the find-by-name stuff, but it works.
         KMHighlightable highlight = fluidSelectable.selectable.Highlight;
-        Transform internalHighlight = highlight.transform.FindChild("Highlight(Clone)");
+        Transform internalHighlight = highlight.transform.Find("Highlight(Clone)");
         if (internalHighlight != null)
         {
             MeshFilter modHighlightMeshFilter = highlight.GetComponent<MeshFilter>();
