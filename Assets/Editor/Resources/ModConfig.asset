@@ -22,6 +22,6 @@ MonoBehaviour:
     in water.mp3\"[/url] by CGEffex [i][CC BY 3.0][/i]\r\n\r\n[h1]Mission Makers[/h1]\r\nFor
     those making custom missions and wanting to reference this module, the type name
     is [b][i]Painting[/i][/b]."
-  version: v1.0.0
+  version: v1.1.1
   outputFolder: E:\Games\SteamLibrary\steamapps\common\Keep Talking and Nobody Explodes\mods
   previewImage: {fileID: 2800000, guid: fc38eff07fb2f51469ac309cca164e26, type: 3}
