@@ -8,6 +8,8 @@ public class PaintingCell : MonoBehaviour
     public PolyExtrude visiblePolyExtrude = null;
     public PolyExtrude highlightablePolyExtrude = null;
 
+	public TextMesh twitchPlaysLabel = null;
+
     public ColorOption ColorOption
     {
         get

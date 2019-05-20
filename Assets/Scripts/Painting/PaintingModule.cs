@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -73,6 +74,24 @@ public class PaintingModule : MonoBehaviour
     {
         ColorBlindSet activeSet = DetermineActiveColorBlindSet();
         SetupPaintingFinalColors(activeSet);
+
+        if (TwitchPlaysActive)
+        {
+            TextMesh cellLabel = _painting.Cells[0].twitchPlaysLabel;
+            cellLabel.GetComponent<Renderer>().sharedMaterial.mainTexture = cellLabel.font.material.mainTexture;
+
+            ShuffleTwitchPlayLabels();
+
+            foreach (PaintingCell paintingCell in _painting.Cells)
+            {
+                GameObject gameObject = paintingCell.twitchPlaysLabel.gameObject;
+                Vector2[] points = paintingCell.visiblePolyExtrude.points;
+                Vector2 center = points.Aggregate((a, b) => a + b) / points.Length;
+                gameObject.transform.localPosition = new Vector3(center.x, 0.025f, center.y);
+
+                gameObject.SetActive(true);
+            }
+        }
     }
 
     private void Repaint()
@@ -312,5 +331,64 @@ public class PaintingModule : MonoBehaviour
     private bool IsAllSolved()
     {
         return _painting.Cells.All((x) => x.ColorOption == x.FinalColorOption);
+    }
+
+    bool TwitchPlaysActive = false;
+
+    public readonly string TwitchHelpMessage = "To paint a cell use !{0} paint <label> <color>.";
+
+    public IEnumerator ProcessTwitchCommand(string command)
+    {
+        string[] split = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (split.Length == 3 && (split[0] == "paint" || split[0] == "p"))
+        {
+            PaletteColor targetColor = _paletteColors.FirstOrDefault(paletteColor => paletteColor.colorOption.ToString().ToLowerInvariant() == split[2]);
+            PaintingCell targetCell = _painting.Cells.FirstOrDefault(paintingCell => paintingCell.twitchPlaysLabel.text == split[1]);
+
+            if (targetColor != null && targetCell.ColorOption != targetColor.colorOption)
+            {
+                yield return null;
+
+                targetColor.fluidSelectable.selectable.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+
+                targetCell.fluidSelectable.selectable.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+
+                ShuffleTwitchPlayLabels();
+            }
+        }
+    }
+
+    public IEnumerator TwitchHandleForcedSolve()
+    {
+        foreach (PaintingCell paintingCell in _painting.Cells)
+        {
+            ColorOption targetColor;
+            if (paintingCell.FinalColorOption.HasValue)
+            {
+                targetColor = (ColorOption) paintingCell.FinalColorOption;
+            }
+            else
+            {
+                targetColor = _painting.colorOptions.Shuffle().FirstOrDefault(color => color != paintingCell.ColorOption);
+            }
+
+            yield return ProcessTwitchCommand("paint " + paintingCell.twitchPlaysLabel.text + " " + targetColor.ToString());
+        }
+    }
+
+    void ShuffleTwitchPlayLabels()
+    {
+        var labelNumbers = Enumerable.Range(1, _painting.cellCount).Shuffle().ToArray();
+        int labelIndex = 0;
+
+        foreach (PaintingCell paintingCell in _painting.Cells)
+        {
+            TextMesh textMesh = paintingCell.twitchPlaysLabel;
+
+            textMesh.text = labelNumbers[labelIndex++].ToString();
+            textMesh.color = paintingCell.ColorOption.GetColor().grayscale > 0.5f ? Color.black : Color.white;
+        }
     }
 }
