@@ -339,7 +339,7 @@ public class PaintingModule : MonoBehaviour
 
     public IEnumerator ProcessTwitchCommand(string command)
     {
-        string[] split = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        string[] split = command.ToLowerInvariant().Replace("gray", "grey").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         if (split.Length == 3 && (split[0] == "paint" || split[0] == "p"))
         {
             PaletteColor targetColor = _paletteColors.FirstOrDefault(paletteColor => paletteColor.colorOption.ToString().ToLowerInvariant() == split[2]);
